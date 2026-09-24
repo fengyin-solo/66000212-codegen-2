@@ -31,7 +31,7 @@
       <div class="bg-gray-900 rounded-xl p-4 flex flex-col items-center gap-4">
         <h3 class="text-purple-300 font-bold">猜盲文</h3>
         <div v-if="!store.quizChar">
-          <button @click="store.generateQuiz()" class="bg-purple-500 px-6 py-3 rounded-lg text-lg hover:bg-purple-400">
+          <button @click="store.startPractice()" class="bg-purple-500 px-6 py-3 rounded-lg text-lg hover:bg-purple-400">
             开始训练
           </button>
         </div>
@@ -67,15 +67,35 @@
             <div class="text-xs text-gray-400">正确率</div>
           </div>
         </div>
-        <div class="space-y-1 max-h-48 overflow-y-auto">
+        <div class="space-y-1 max-h-40 overflow-y-auto">
           <div v-for="(h, i) in store.history.slice(0, 20)" :key="i"
             class="flex justify-between bg-gray-800 rounded p-2 text-sm"
             :class="h.correct ? 'border-l-4 border-green-500' : 'border-l-4 border-red-500'">
             <span>{{ h.input }}</span><span>{{ h.correct ? '✓' : '✗' }}</span>
           </div>
+          <p v-if="!store.history.length" class="text-xs text-gray-500 text-center py-2">还没有作答记录</p>
+        </div>
+
+        <div class="mt-3">
+          <div class="flex items-center justify-between mb-1">
+            <h4 class="text-xs text-gray-400">每字母答对条数（累计全部时间，与报表一致）</h4>
+          </div>
+          <div class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
+            <span v-for="l in store.letterStats" :key="l.char"
+              class="text-xs bg-gray-800 rounded px-1.5 py-0.5"
+              :title="`答对 ${l.correctCount} 条 / 共 ${l.total} 条`">
+              <span class="text-purple-400 font-semibold">{{ l.char }}</span>
+              <span class="text-green-400">{{ l.correctCount }}</span>
+              <span class="text-gray-500">/{{ l.total }}</span>
+            </span>
+            <span v-if="!store.letterStats.length" class="text-xs text-gray-500">完成练习后显示</span>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Report -->
+    <PracticeReport v-if="activeTab === 'report'" />
 
     <!-- Reference -->
     <div v-if="activeTab === 'ref'" class="bg-gray-900 rounded-xl p-4">
@@ -100,12 +120,14 @@ import { ref } from 'vue'
 import { useBrailleStore } from './store/braille'
 import { BRAILLE_MAP } from './utils/braille'
 import BrailleCell from './components/BrailleCell.vue'
+import PracticeReport from './components/PracticeReport.vue'
 
 const store = useBrailleStore()
 const brailleMap = BRAILLE_MAP
 const tabs = [
   { id: 'translate', label: '翻译模式' },
   { id: 'learn', label: '训练模式' },
+  { id: 'report', label: '练习报表' },
   { id: 'ref', label: '速查表' },
 ]
 const activeTab = ref('translate')
