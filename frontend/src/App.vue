@@ -45,12 +45,24 @@
               <span class="text-xs">{{ d }}</span>
             </button>
           </div>
-          <button @click="store.checkQuizAnswer()" class="bg-purple-500 px-6 py-2 rounded hover:bg-purple-400">确认</button>
+          <div class="flex gap-2">
+            <button @click="store.checkQuizAnswer()" class="bg-purple-500 px-6 py-2 rounded hover:bg-purple-400">确认</button>
+            <button @click="store.endTraining()" class="bg-gray-700 px-6 py-2 rounded text-sm hover:bg-gray-600">结束训练</button>
+          </div>
         </div>
       </div>
       <div class="bg-gray-900 rounded-xl p-4">
-        <div class="flex justify-between mb-2">
+        <div class="flex justify-between mb-2 items-center">
           <h3 class="text-purple-300 font-bold">统计</h3>
+          <!-- 与报表共用同一时间范围：切换后两边答对条数保持一致 -->
+          <div class="flex bg-gray-800 rounded-lg p-0.5 text-xs">
+            <button v-for="opt in rangeOptions" :key="opt.id"
+              @click="store.setRange(opt.id)"
+              class="px-2.5 py-1 rounded-md"
+              :class="store.range === opt.id ? 'bg-purple-500 text-white' : 'text-gray-300 hover:bg-gray-700'">
+              {{ opt.label }}
+            </button>
+          </div>
           <button @click="store.resetScore()" class="text-red-400 text-xs hover:underline">重置</button>
         </div>
         <div class="grid grid-cols-3 gap-2 text-center mb-3">
@@ -67,6 +79,7 @@
             <div class="text-xs text-gray-400">正确率</div>
           </div>
         </div>
+        <p v-if="!store.history.length" class="text-xs text-gray-500 mb-2">该时间范围内暂无作答记录</p>
         <div class="space-y-1 max-h-48 overflow-y-auto">
           <div v-for="(h, i) in store.history.slice(0, 20)" :key="i"
             class="flex justify-between bg-gray-800 rounded p-2 text-sm"
@@ -75,6 +88,11 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Report -->
+    <div v-if="activeTab === 'report'">
+      <ReportView @go-practice="activeTab = 'learn'" />
     </div>
 
     <!-- Reference -->
@@ -100,15 +118,23 @@ import { ref } from 'vue'
 import { useBrailleStore } from './store/braille'
 import { BRAILLE_MAP } from './utils/braille'
 import BrailleCell from './components/BrailleCell.vue'
+import ReportView from './components/ReportView.vue'
+import type { ReportRange } from './types'
 
 const store = useBrailleStore()
 const brailleMap = BRAILLE_MAP
 const tabs = [
   { id: 'translate', label: '翻译模式' },
   { id: 'learn', label: '训练模式' },
+  { id: 'report', label: '练习报表' },
   { id: 'ref', label: '速查表' },
 ]
 const activeTab = ref('translate')
+
+const rangeOptions: { id: ReportRange; label: string }[] = [
+  { id: '7d', label: '近七天' },
+  { id: 'all', label: '全部' },
+]
 
 function doExport() {
   const text = store.exportPDF()
